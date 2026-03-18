@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Finance</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/781/781760.png">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #0f101a; --card: rgba(255, 255, 255, 0.08);
+            --text: #ffffff; --accent: #00d2ff; --danger: #ff5252;
+            --grad: linear-gradient(135deg, #00d2ff, #9d50bb);
+        }
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; }
+        .app { width: 100%; max-width: 420px; padding: 15px; }
+        .glass-card { background: var(--card); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
+        
+        /* Стили настроек и справки */
+        #settingsPanel {
+            position: fixed; top: 0; right: -100%; width: 100%; height: 100%;
+            background: var(--bg); z-index: 100; transition: 0.4s; padding: 20px; box-sizing: border-box; overflow-y: auto;
+        }
+        #settingsPanel.active { right: 0; }
+        .help-section { font-size: 0.85rem; line-height: 1.5; color: #ccc; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 15px; margin-bottom: 20px; }
+        .help-section b { color: var(--accent); }
+
+        /* UI Элементы */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        #screen { font-size: 3rem; text-align: right; color: var(--accent); margin-bottom: 10px; min-height: 3.5rem; font-weight: 200; overflow: hidden; }
+        .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 10px 0; }
+        .progress-fill { height: 100%; width: 0%; transition: 0.5s; }
+
+        .cat-group { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .cat-btn { padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 15px; font-size: 0.85rem; white-space: nowrap; border: 1px solid transparent; }
+        .cat-btn.active { background: var(--accent); color: #000; font-weight: bold; }
+
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
+        button { border: none; background: rgba(255,255,255,0.05); color: #fff; padding: 15px; border-radius: 15px; font-size: 1.1rem; cursor: pointer; }
+        button:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
+        .btn-add { grid-column: span 4; background: var(--grad); font-weight: bold; margin-top: 5px; }
+
+        .day-sep { font-size: 0.7rem; color: var(--accent); opacity: 0.6; margin: 15px 0 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+        
+        .set-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--card); padding: 10px; border-radius: 15px; }
+        .set-row input { background: rgba(255,255,255,0.1); border: 1px solid var(--accent); color: white; padding: 8px; border-radius: 8px; width: 80px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="settingsPanel">
+    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin:0">О приложении</h2>
+        <button onclick="toggleSettings()" style="background:var(--accent); color:#000; font-weight:bold; padding:8px 15px; border-radius:10px">ЗАКРЫТЬ</button>
+    </div>
+
+    <div class="help-section">
+        <b>Как пользоваться:</b><br>
+        1. <b>Ввод:</b> Используйте калькулятор для суммы (поддерживает + - * / и точки).<br>
+        2. <b>Категория:</b> Выберите нужную категорию в списке над кнопками.<br>
+        3. <b>Лимиты:</b> Полоска вверху показывает расход за <b>текущий месяц</b>.<br>
+        4. <b>Архив:</b> Листайте стрелками возле графика, чтобы смотреть прошлые месяцы.
+    </div>
+
+    <h3 style="margin-top:20px">Настройка категорий</h3>
+    <div style="display:flex; gap:5px; margin-bottom:15px;">
+        <input type="text" id="newCatName" placeholder="🍿 Кино" style="flex:1; padding:10px; border-radius:10px; border:1px solid #444; background:#000; color:#fff">
+        <button onclick="addNewCategory()" style="padding:10px; background:var(--accent); color:#000">+</button>
+    </div>
+    <div id="limitSettingsContainer"></div>
+    
+    <button onclick="clearAllData()" style="width:100%; margin-top:30px; background:none; border:1px solid var(--danger); color:var(--danger); font-size:0.8rem; padding:10px">СБРОСИТЬ ВСЕ ДАННЫЕ</button>
+</div>
+
+<div class="app">
+    <div class="header">
+        <div style="display:flex; gap:5px" id="currencyBox">
+            <button onclick="setCurr('₽', 1, this)" class="active" style="padding:5px 10px; font-size:0.7rem">RUB</button>
+            <button onclick="setCurr('$', 92, this)" style="padding:5px 10px; font-size:0.7rem">USD</button>
+        </div>
+        <button onclick="toggleSettings()" style="background:none; border:1px solid rgba(255,255,255,0.2); width:40px; height:40px; border-radius:50%">⚙️</button>
+    </div>
+
+    <div class="glass-card">
+        <div id="screen">0</div>
+        <div style="display:flex; justify-content:space-between; font-size:0.8rem">
+            <span id="catDisplay">...</span>
+            <span>Остаток: <b id="limitLeft">0</b></span>
+        </div>
+        <div class="progress-bar"><div id="limitBar" class="progress-fill"></div></div>
+        <div class="cat-group" id="catGroup"></div>
+        
+        <div class="calc-grid">
+            <button onclick="press('7')">7</button><button onclick="press('8')">8</button><button onclick="press('9')">9</button><button onclick="press('/')" style="color:var(--accent)">÷</button>
+            <button onclick="press('4')">4</button><button onclick="press('5')">5</button><button onclick="press('6')">6</button><button onclick="press('*')" style="color:var(--accent)">×</button>
+            <button onclick="press('1')">1</button><button onclick="press('2')">2</button><button onclick="press('3')">3</button><button onclick="press('-')" style="color:var(--accent)">-</button>
+            <button onclick="clearScr()" style="color:var(--danger)">C</button><button onclick="press('0')">0</button><button onclick="press('.')">.</button><button onclick="press('+')" style="color:var(--accent)">+</button>
+            <button class="btn-add" onclick="addExpense()">ДОБАВИТЬ РАСХОД</button>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+            <button onclick="changeMonth(-1)" style="padding:5px 12px; font-size:0.8rem">←</button>
+            <b id="monthTitle" style="color:var(--accent); text-transform:capitalize; font-size:0.9rem"></b>
+            <button onclick="changeMonth(1)" style="padding:5px 12px; font-size:0.8rem">→</button>
+        </div>
+        <div style="height:160px"><canvas id="myChart"></canvas></div>
+        <div id="historyBox" style="margin-top:15px"></div>
+    </div>
+</div>
+
+<script>
+    let input = "", cat = "", curr = "₽", rate = 1, viewDate = new Date(), myChart = null;
+    let cats = JSON.parse(localStorage.getItem('f_cats_v6')) || [{name:'Еда', icon:'🍔'}, {name:'Транспорт', icon:'🚌'}, {name:'Связь', icon:'📱'}];
+    let lims = JSON.parse(localStorage.getItem('f_lims_v6')) || {'Еда':15000, 'Транспорт':5000, 'Связь':1000};
+    cat = cats[0]?.name || "";
+
+    function save() { localStorage.setItem('f_cats_v6', JSON.stringify(cats)); localStorage.setItem('f_lims_v6', JSON.stringify(lims)); }
+    function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('active'); update(); }
+    function press(v) { input += v; document.getElementById('screen').innerText = input; }
+    function clearScr() { input = ""; document.getElementById('screen').innerText = "0"; }
+    function evalRes() { try { input = eval(input).toString(); document.getElementById('screen').innerText = input; } catch { input = ""; } }
+    function changeMonth(d) { viewDate.setMonth(viewDate.getMonth() + d); update(); }
+    function setCurr(s, r, el) { curr = s; rate = r; document.querySelectorAll('#currencyBox button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+
+    function addNewCategory() {
+        const n = document.getElementById('newCatName').value.trim();
+        if(n) { cats.push({name:n, icon:''}); lims[n] = 5000; save(); document.getElementById('newCatName').value = ""; renderSettings(); update(); }
+    }
+
+    function clearAllData() { if(confirm("Внимание! Это удалит все ваши записи безвозвратно. Продолжить?")) { localStorage.clear(); location.reload(); } }
+
+    function addExpense() {
+        let v = 0; try { v = Math.abs(eval(input || "0")); } catch(e) { return; }
+        if(v <= 0 || !cat) return;
+        const data = JSON.parse(localStorage.getItem('f_data_v6') || '[]');
+        data.unshift({id:Date.now(), cat, amt:v.toFixed(2), rub:v*rate, curr, date:new Date().toISOString()});
+        localStorage.setItem('f_data_v6', JSON.stringify(data));
+        input = ""; clearScr(); viewDate = new Date(); update();
+    }
+
+    function renderSettings() {
+        document.getElementById('limitSettingsContainer').innerHTML = cats.map(c => `
+            <div class="set-row">
+                <span onclick="if(confirm('Удалить категорию?')) { cats=cats.filter(cat=>cat.name!=='${c.name}'); save(); renderSettings(); update(); }">${c.name} 🗑️</span>
+                <input type="number" value="${lims[c.name]}" onchange="lims['${c.name}']=parseInt(this.value); save(); update();">
+            </div>
+        `).join('');
+    }
+
+    function update() {
+        const data = JSON.parse(localStorage.getItem('f_data_v6') || '[]');
+        const filtered = data.filter(i => {
+            const d = new Date(i.date);
+            return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
+        });
+
+        document.getElementById('monthTitle').innerText = viewDate.toLocaleString('ru', {month:'long', year:'numeric'});
+        
+        const spent = filtered.filter(i => i.cat === cat).reduce((s, i) => s + i.rub, 0);
+        const l = lims[cat] || 0;
+        const p = l > 0 ? Math.min((spent/l)*100, 100) : 0;
+        document.getElementById('catDisplay').innerText = cat || "Выберите категорию";
+        document.getElementById('limitBar').style.width = p + '%';
+        document.getElementById('limitBar').style.background = p > 90 ? 'var(--danger)' : 'var(--accent)';
+        document.getElementById('limitLeft').innerText = Math.max(l - spent, 0).toLocaleString() + ' ₽';
+
+        document.getElementById('catGroup').innerHTML = cats.map(c => `
+            <div class="cat-btn ${c.name === cat ? 'active' : ''}" onclick="cat='${c.name}'; update()">${c.name}</div>
+        `).join('');
+
+        let histHTML = "", lastDay = "";
+        filtered.slice(0, 20).forEach(i => {
+            const d = new Date(i.date).toLocaleDateString('ru', {day:'numeric', month:'short'});
+            if(d !== lastDay) { histHTML += `<div class="day-sep">${d}</div>`; lastDay = d; }
+            histHTML += `<div class="history-item"><span>${i.cat}</span><b>-${i.amt} ${i.curr}</b></div>`;
+        });
+        document.getElementById('historyBox').innerHTML = histHTML || '<div style="opacity:0.3;text-align:center;padding:20px">Записей нет</div>';
+
+        const s = {}; filtered.forEach(i => s[i.cat] = (s[i.cat] || 0) + i.rub);
+        if(myChart) myChart.destroy();
+        myChart = new Chart(document.getElementById('myChart'), {
+            type: 'doughnut',
+            data: { labels: Object.keys(s), datasets: [{ data: Object.values(s), backgroundColor: ['#00d2ff','#9d50bb','#ff5252','#4caf50','#ff9800','#e91e63','#009688'], borderWidth: 0 }] },
+            options: { plugins: { legend: { position: 'right', labels: { color: '#fff', font: {size: 10} } } }, maintainAspectRatio: false, cutout: '75%' }
+        });
+        renderSettings();
+    }
+    update();
+</script>
+</body>
+</html>
+
