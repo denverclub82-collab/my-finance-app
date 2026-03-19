@@ -2,197 +2,218 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Finance</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZenFin Pro v16.1</title>
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/781/781760.png">
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg: #0f101a; --card: rgba(255, 255, 255, 0.08);
-            --text: #ffffff; --accent: #00d2ff; --danger: #ff5252;
-            --grad: linear-gradient(135deg, #00d2ff, #9d50bb);
+        :root { 
+            --bg: #0b0c14; --card: rgba(255, 255, 255, 0.06); --text: #f0f0f0; 
+            --accent: #00d2ff; --danger: #ff5252; --success: #4caf50;
+            --grad: linear-gradient(135deg, #00d2ff 0%, #9d50bb 100%); 
         }
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; }
-        .app { width: 100%; max-width: 420px; padding: 15px; }
-        .glass-card { background: var(--card); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 20px; margin-bottom: 15px; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; overflow-x: hidden; }
         
-        /* Стили настроек и справки */
-        #settingsPanel {
-            position: fixed; top: 0; right: -100%; width: 100%; height: 100%;
-            background: var(--bg); z-index: 100; transition: 0.4s; padding: 20px; box-sizing: border-box; overflow-y: auto;
-        }
-        #settingsPanel.active { right: 0; }
-        .help-section { font-size: 0.85rem; line-height: 1.5; color: #ccc; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 15px; margin-bottom: 20px; }
-        .help-section b { color: var(--accent); }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .app > div { animation: fadeInUp 0.6s ease forwards; }
 
-        /* UI Элементы */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        #screen { font-size: 3rem; text-align: right; color: var(--accent); margin-bottom: 10px; min-height: 3.5rem; font-weight: 200; overflow: hidden; }
-        .progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin: 10px 0; }
-        .progress-fill { height: 100%; width: 0%; transition: 0.5s; }
+        .app { width: 100%; max-width: 414px; padding: 10px; min-height: 100vh; }
+        .glass-card { background: var(--card); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 15px; margin-bottom: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 5px; }
+        .brand { font-size: 1.4rem; font-weight: 900; background: var(--grad); -webkit-background-clip: text; color: transparent; letter-spacing: -1px; }
+        .brand span { font-size: 0.7rem; vertical-align: top; margin-left: 2px; border: 1px solid var(--accent); padding: 1px 3px; border-radius: 4px; color: var(--accent); }
+        
+        .icon-btn { background: var(--card); border: 1px solid rgba(255,255,255,0.1); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; }
+        .ok-btn { background: var(--accent); color: #000; border: none; padding: 6px 14px; border-radius: 12px; font-weight: bold; }
+
+        .balance-chip { background: rgba(255,255,255,0.03); padding: 6px 12px; border-radius: 12px; border: 1px solid rgba(0,210,255,0.2); font-size: 0.85rem; color: var(--accent); font-weight: bold; display: inline-flex; align-items: center; gap: 6px; }
+
+        #screen { font-size: 2rem; text-align: right; color: var(--accent); min-height: 2.4rem; font-weight: 200; letter-spacing: -1px; }
+        #liveResult { font-size: 0.8rem; text-align: right; color: #888; min-height: 1rem; margin-bottom: 8px; }
+        
+        .budget-container { margin: 10px 0; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 8px; }
+        .budget-label { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 5px; color: #888; }
+        .progress-bg { background: rgba(255,255,255,0.1); height: 4px; border-radius: 10px; }
+        .progress-fill { height: 100%; width: 0%; background: var(--grad); transition: width 0.6s ease; }
 
         .cat-group { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
-        .cat-btn { padding: 10px 16px; background: rgba(255,255,255,0.05); border-radius: 15px; font-size: 0.85rem; white-space: nowrap; border: 1px solid transparent; }
+        .cat-btn { padding: 6px 12px; background: rgba(255,255,255,0.04); border-radius: 10px; font-size: 0.75rem; white-space: nowrap; border: 1px solid rgba(255,255,255,0.05); }
         .cat-btn.active { background: var(--accent); color: #000; font-weight: bold; }
 
-        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
-        button { border: none; background: rgba(255,255,255,0.05); color: #fff; padding: 15px; border-radius: 15px; font-size: 1.1rem; cursor: pointer; }
-        button:active { transform: scale(0.95); background: rgba(255,255,255,0.1); }
-        .btn-add { grid-column: span 4; background: var(--grad); font-weight: bold; margin-top: 5px; }
+        /* Компактная сетка калькулятора */
+        .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .calc-grid button { border: none; background: rgba(255,255,255,0.05); color: #fff; padding: 10px; border-radius: 14px; font-size: 1.1rem; }
+        .btn-op { color: var(--accent); font-weight: bold; }
+        .action-btns { grid-column: span 4; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+        .btn-inc { background: var(--success) !important; color: #000 !important; font-weight: 800; border-radius: 16px; padding: 12px !important; font-size: 0.8rem !important; }
+        .btn-exp { background: var(--grad) !important; color: #000 !important; font-weight: 800; border-radius: 16px; padding: 12px !important; font-size: 0.8rem !important; }
 
-        .day-sep { font-size: 0.7rem; color: var(--accent); opacity: 0.6; margin: 15px 0 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .history-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
-        
-        .set-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: var(--card); padding: 10px; border-radius: 15px; }
-        .set-row input { background: rgba(255,255,255,0.1); border: 1px solid var(--accent); color: white; padding: 8px; border-radius: 8px; width: 80px; text-align: center; }
+        .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.85rem; }
+        .history-date { font-size: 0.6rem; color: #666; width: 50px; }
+        .history-main { flex: 1; }
+        .history-amt { font-weight: bold; }
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 100; transform: translateY(100%); transition: 0.4s; padding: 20px; overflow-y: auto; }
+        .overlay.active { transform: translateY(0); }
+        .input-group { background: var(--card); padding: 15px; border-radius: 18px; margin-bottom: 12px; }
+        input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 10px; outline: none; }
     </style>
 </head>
 <body>
 
-<div id="settingsPanel">
-    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin:0">О приложении</h2>
-        <button onclick="toggleSettings()" style="background:var(--accent); color:#000; font-weight:bold; padding:8px 15px; border-radius:10px">ЗАКРЫТЬ</button>
+<div id="settingsOverlay" class="overlay">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+        <h2 style="margin:0;">ZenFin Pro</h2>
+        <button onclick="closeAll()" class="ok-btn">OK</button>
     </div>
-
-    <div class="help-section">
-        <b>Как пользоваться:</b><br>
-        1. <b>Ввод:</b> Используйте калькулятор для суммы (поддерживает + - * / и точки).<br>
-        2. <b>Категория:</b> Выберите нужную категорию в списке над кнопками.<br>
-        3. <b>Лимиты:</b> Полоска вверху показывает расход за <b>текущий месяц</b>.<br>
-        4. <b>Архив:</b> Листайте стрелками возле графика, чтобы смотреть прошлые месяцы.
+    <div class="input-group">
+        <label style="color:var(--accent); font-size:0.65rem; display:block; margin-bottom:5px;">БАЛАНС:</label>
+        <input type="number" id="startBal" onchange="updateSBal(this.value)">
     </div>
-
-    <h3 style="margin-top:20px">Настройка категорий</h3>
-    <div style="display:flex; gap:5px; margin-bottom:15px;">
-        <input type="text" id="newCatName" placeholder="🍿 Кино" style="flex:1; padding:10px; border-radius:10px; border:1px solid #444; background:#000; color:#fff">
-        <button onclick="addNewCategory()" style="padding:10px; background:var(--accent); color:#000">+</button>
+    <div class="input-group">
+        <label style="color:var(--accent); font-size:0.65rem; display:block; margin-bottom:5px;">ЛИМИТ:</label>
+        <input type="number" id="monthLimit" onchange="updateLimit(this.value)">
     </div>
-    <div id="limitSettingsContainer"></div>
-    
-    <button onclick="clearAllData()" style="width:100%; margin-top:30px; background:none; border:1px solid var(--danger); color:var(--danger); font-size:0.8rem; padding:10px">СБРОСИТЬ ВСЕ ДАННЫЕ</button>
+    <div class="input-group">
+        <label style="color:var(--accent); font-size:0.65rem; display:block; margin-bottom:5px;">КАТЕГОРИЯ:</label>
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="newCat">
+            <button onclick="addCat()" style="background:var(--accent); border:none; border-radius:10px; width:40px; font-weight:bold;">+</button>
+        </div>
+        <div id="catList" style="margin-top:15px;"></div>
+    </div>
+    <button onclick="exportJSON()" style="width:100%; background:rgba(255,255,255,0.05); color:#888; padding:12px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); font-weight:bold; font-size:0.8rem;">💾 БЭКАП JSON</button>
 </div>
 
 <div class="app">
     <div class="header">
-        <div style="display:flex; gap:5px" id="currencyBox">
-            <button onclick="setCurr('₽', 1, this)" class="active" style="padding:5px 10px; font-size:0.7rem">RUB</button>
-            <button onclick="setCurr('$', 92, this)" style="padding:5px 10px; font-size:0.7rem">USD</button>
+        <div class="brand">ZenFin<span>PRO</span></div>
+        <div style="display:flex; gap:8px;">
+            <button class="icon-btn" onclick="document.getElementById('helpOverlay').classList.add('active')">?</button>
+            <button class="icon-btn" onclick="openSet()">⚙️</button>
         </div>
-        <button onclick="toggleSettings()" style="background:none; border:1px solid rgba(255,255,255,0.2); width:40px; height:40px; border-radius:50%">⚙️</button>
     </div>
 
     <div class="glass-card">
+        <div class="balance-chip">💰 <span id="curBal">0</span> ₽</div>
         <div id="screen">0</div>
-        <div style="display:flex; justify-content:space-between; font-size:0.8rem">
-            <span id="catDisplay">...</span>
-            <span>Остаток: <b id="limitLeft">0</b></span>
+        <div id="liveResult"></div>
+
+        <div id="budgetBar" class="budget-container" style="display:none">
+            <div class="budget-label">
+                <span>Остаток: <span id="limitLeft">0</span> ₽</span>
+                <span id="limitPerc">0%</span>
+            </div>
+            <div class="progress-bg"><div id="limitFill" class="progress-fill"></div></div>
         </div>
-        <div class="progress-bar"><div id="limitBar" class="progress-fill"></div></div>
+
         <div class="cat-group" id="catGroup"></div>
-        
         <div class="calc-grid">
-            <button onclick="press('7')">7</button><button onclick="press('8')">8</button><button onclick="press('9')">9</button><button onclick="press('/')" style="color:var(--accent)">÷</button>
-            <button onclick="press('4')">4</button><button onclick="press('5')">5</button><button onclick="press('6')">6</button><button onclick="press('*')" style="color:var(--accent)">×</button>
-            <button onclick="press('1')">1</button><button onclick="press('2')">2</button><button onclick="press('3')">3</button><button onclick="press('-')" style="color:var(--accent)">-</button>
-            <button onclick="clearScr()" style="color:var(--danger)">C</button><button onclick="press('0')">0</button><button onclick="press('.')">.</button><button onclick="press('+')" style="color:var(--accent)">+</button>
-            <button class="btn-add" onclick="addExpense()">ДОБАВИТЬ РАСХОД</button>
+            <button onclick="pr('7')">7</button><button onclick="pr('8')">8</button><button onclick="pr('9')">9</button><button class="btn-op" onclick="pr('/')">÷</button>
+            <button onclick="pr('4')">4</button><button onclick="pr('5')">5</button><button onclick="pr('6')">6</button><button class="btn-op" onclick="pr('*')">×</button>
+            <button onclick="pr('1')">1</button><button onclick="pr('2')">2</button><button onclick="pr('3')">3</button><button class="btn-op" onclick="pr('-')">-</button>
+            <button style="color:var(--danger)" onclick="input='';renderScr()">C</button><button onclick="pr('0')">0</button><button onclick="bs()">⌫</button><button class="btn-op" onclick="pr('+')">+</button>
+            <div class="action-btns">
+                <button class="btn-inc" onclick="add('inc')">Доход +</button>
+                <button class="btn-exp" onclick="add('exp')">Расход -</button>
+            </div>
         </div>
     </div>
 
     <div class="glass-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-            <button onclick="changeMonth(-1)" style="padding:5px 12px; font-size:0.8rem">←</button>
-            <b id="monthTitle" style="color:var(--accent); text-transform:capitalize; font-size:0.9rem"></b>
-            <button onclick="changeMonth(1)" style="padding:5px 12px; font-size:0.8rem">→</button>
+            <button onclick="chMonth(-1)" style="background:none; border:none; color:var(--accent); font-size:1.2rem">‹</button>
+            <b id="monthLab" style="font-size:0.9rem;"></b>
+            <button onclick="chMonth(1)" style="background:none; border:none; color:var(--accent); font-size:1.2rem">›</button>
         </div>
-        <div style="height:160px"><canvas id="myChart"></canvas></div>
-        <div id="historyBox" style="margin-top:15px"></div>
+        <div style="height:120px"><canvas id="chart"></canvas></div>
+        <div id="hist" style="margin-top:10px"></div>
     </div>
 </div>
 
+<div id="helpOverlay" class="overlay">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+        <h2>Инфо</h2>
+        <button onclick="closeAll()" class="ok-btn">OK</button>
+    </div>
+    <p style="font-size:0.9rem; color:#bbb;">v16.1 Compact. Smart Emoji включены: Еда, Авто, Связь, Игры, Спорт и др.</p>
+</div>
+
 <script>
-    let input = "", cat = "", curr = "₽", rate = 1, viewDate = new Date(), myChart = null;
-    let cats = JSON.parse(localStorage.getItem('f_cats_v6')) || [{name:'Еда', icon:'🍔'}, {name:'Транспорт', icon:'🚌'}, {name:'Связь', icon:'📱'}];
-    let lims = JSON.parse(localStorage.getItem('f_lims_v6')) || {'Еда':15000, 'Транспорт':5000, 'Связь':1000};
-    cat = cats[0]?.name || "";
+    let input = "", cat = "Общее", date = new Date(), chart = null;
+    let cats = JSON.parse(localStorage.getItem('f_cats_v15')) || ["Еда","Авто","Связь","Общее"];
+    let sBal = parseFloat(localStorage.getItem('f_sbal_v15')) || 0;
+    let limit = parseFloat(localStorage.getItem('f_limit_v15')) || 0;
 
-    function save() { localStorage.setItem('f_cats_v6', JSON.stringify(cats)); localStorage.setItem('f_lims_v6', JSON.stringify(lims)); }
-    function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('active'); update(); }
-    function press(v) { input += v; document.getElementById('screen').innerText = input; }
-    function clearScr() { input = ""; document.getElementById('screen').innerText = "0"; }
-    function evalRes() { try { input = eval(input).toString(); document.getElementById('screen').innerText = input; } catch { input = ""; } }
-    function changeMonth(d) { viewDate.setMonth(viewDate.getMonth() + d); update(); }
-    function setCurr(s, r, el) { curr = s; rate = r; document.querySelectorAll('#currencyBox button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+    const emojiMap = { "еда": "🍕", "авто": "🚗", "связь": "📱", "игры": "🎮", "дом": "🏠", "спорт": "💪", "здоровье": "💊", "учеба": "📚", "отдых": "🌴" };
 
-    function addNewCategory() {
-        const n = document.getElementById('newCatName').value.trim();
-        if(n) { cats.push({name:n, icon:''}); lims[n] = 5000; save(); document.getElementById('newCatName').value = ""; renderSettings(); update(); }
+    function closeAll() { document.querySelectorAll('.overlay').forEach(o => o.classList.remove('active')); }
+    function openSet() { document.getElementById('settingsOverlay').classList.add('active'); renderCats(); }
+    function updateSBal(v) { sBal = parseFloat(v) || 0; localStorage.setItem('f_sbal_v15', sBal); update(); }
+    function updateLimit(v) { limit = parseFloat(v) || 0; localStorage.setItem('f_limit_v15', limit); update(); }
+    
+    function addCat() { 
+        let v = document.getElementById('newCat').value.trim(); 
+        if(v){ cats.push(v); localStorage.setItem('f_cats_v15', JSON.stringify(cats)); document.getElementById('newCat').value=''; renderCats(); update(); }
     }
 
-    function clearAllData() { if(confirm("Внимание! Это удалит все ваши записи безвозвратно. Продолжить?")) { localStorage.clear(); location.reload(); } }
-
-    function addExpense() {
-        let v = 0; try { v = Math.abs(eval(input || "0")); } catch(e) { return; }
-        if(v <= 0 || !cat) return;
-        const data = JSON.parse(localStorage.getItem('f_data_v6') || '[]');
-        data.unshift({id:Date.now(), cat, amt:v.toFixed(2), rub:v*rate, curr, date:new Date().toISOString()});
-        localStorage.setItem('f_data_v6', JSON.stringify(data));
-        input = ""; clearScr(); viewDate = new Date(); update();
+    function pr(v) { input += v; renderScr(); }
+    function bs() { input = input.slice(0,-1); renderScr(); }
+    function renderScr() { 
+        document.getElementById('screen').innerText = input || "0";
+        try { if(input.match(/[+\-*/]/)) document.getElementById('liveResult').innerText = "= " + eval(input).toLocaleString() + " ₽"; } catch(e){}
     }
 
-    function renderSettings() {
-        document.getElementById('limitSettingsContainer').innerHTML = cats.map(c => `
-            <div class="set-row">
-                <span onclick="if(confirm('Удалить категорию?')) { cats=cats.filter(cat=>cat.name!=='${c.name}'); save(); renderSettings(); update(); }">${c.name} 🗑️</span>
-                <input type="number" value="${lims[c.name]}" onchange="lims['${c.name}']=parseInt(this.value); save(); update();">
-            </div>
-        `).join('');
+    function add(type) {
+        let v = 0; try { v = Math.abs(eval(input) || 0); } catch(e){return;}
+        if(v <= 0) return;
+        const data = JSON.parse(localStorage.getItem('f_data_v15') || '[]');
+        let displayCat = cat;
+        for (let key in emojiMap) { if(cat.toLowerCase().includes(key)) displayCat = emojiMap[key] + " " + cat; }
+        
+        data.unshift({ id: Date.now(), cat: type==='inc'?'💰 Доход':displayCat, amt:v, type, dt: new Date().toISOString() });
+        localStorage.setItem('f_data_v15', JSON.stringify(data));
+        input = ""; renderScr(); update();
     }
+
+    function chMonth(v) { date.setMonth(date.getMonth()+v); update(); }
+    function renderCats() { document.getElementById('catList').innerHTML = cats.map((c,i) => `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem;"><span>${c}</span><button onclick="cats.splice(${i},1);localStorage.setItem('f_cats_v15', JSON.stringify(cats));renderCats()" style="color:var(--danger); background:none; border:none;">Удалить</button></div>`).join(''); }
 
     function update() {
-        const data = JSON.parse(localStorage.getItem('f_data_v6') || '[]');
-        const filtered = data.filter(i => {
-            const d = new Date(i.date);
-            return d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
-        });
+        const data = JSON.parse(localStorage.getItem('f_data_v15') || '[]');
+        const filt = data.filter(i => { let d=new Date(i.dt); return d.getMonth()===date.getMonth() && d.getFullYear()===date.getFullYear(); });
+        const total = data.reduce((s,i)=> i.type==='inc'?s+i.amt:s-i.amt, sBal);
 
-        document.getElementById('monthTitle').innerText = viewDate.toLocaleString('ru', {month:'long', year:'numeric'});
-        
-        const spent = filtered.filter(i => i.cat === cat).reduce((s, i) => s + i.rub, 0);
-        const l = lims[cat] || 0;
-        const p = l > 0 ? Math.min((spent/l)*100, 100) : 0;
-        document.getElementById('catDisplay').innerText = cat || "Выберите категорию";
-        document.getElementById('limitBar').style.width = p + '%';
-        document.getElementById('limitBar').style.background = p > 90 ? 'var(--danger)' : 'var(--accent)';
-        document.getElementById('limitLeft').innerText = Math.max(l - spent, 0).toLocaleString() + ' ₽';
+        document.getElementById('curBal').innerText = total.toLocaleString();
+        document.getElementById('monthLab').innerText = date.toLocaleString('ru', {month:'long', year:'numeric'});
+        document.getElementById('catGroup').innerHTML = cats.map(c => `<div class="cat-btn ${c===cat?'active':''}" onclick="cat='${c}'; update()">${c}</div>`).join('');
 
-        document.getElementById('catGroup').innerHTML = cats.map(c => `
-            <div class="cat-btn ${c.name === cat ? 'active' : ''}" onclick="cat='${c.name}'; update()">${c.name}</div>
-        `).join('');
+        const expOnly = filt.filter(i => i.type === 'exp').reduce((s, i) => s + i.amt, 0);
+        if (limit > 0) {
+            document.getElementById('budgetBar').style.display = 'block';
+            let p = Math.min((expOnly/limit)*100, 100);
+            document.getElementById('limitFill').style.width = p + '%';
+            document.getElementById('limitLeft').innerText = (limit - expOnly).toLocaleString();
+            document.getElementById('limitFill').style.background = (limit - expOnly < 0) ? 'var(--danger)' : 'var(--grad)';
+        } else { document.getElementById('budgetBar').style.display = 'none'; }
 
-        let histHTML = "", lastDay = "";
-        filtered.slice(0, 20).forEach(i => {
-            const d = new Date(i.date).toLocaleDateString('ru', {day:'numeric', month:'short'});
-            if(d !== lastDay) { histHTML += `<div class="day-sep">${d}</div>`; lastDay = d; }
-            histHTML += `<div class="history-item"><span>${i.cat}</span><b>-${i.amt} ${i.curr}</b></div>`;
-        });
-        document.getElementById('historyBox').innerHTML = histHTML || '<div style="opacity:0.3;text-align:center;padding:20px">Записей нет</div>';
+        document.getElementById('hist').innerHTML = filt.slice(0,15).map(i => `
+            <div class="history-item">
+                <div class="history-date">${new Date(i.dt).getDate()}.${new Date(i.dt).getMonth()+1}</div>
+                <div class="history-main">${i.cat}</div>
+                <div class="history-amt ${i.type==='inc'?'pos':'neg'}">${i.type==='inc'?'+':''}${i.amt.toLocaleString()}</div>
+            </div>`).join('');
 
-        const s = {}; filtered.forEach(i => s[i.cat] = (s[i.cat] || 0) + i.rub);
-        if(myChart) myChart.destroy();
-        myChart = new Chart(document.getElementById('myChart'), {
-            type: 'doughnut',
-            data: { labels: Object.keys(s), datasets: [{ data: Object.values(s), backgroundColor: ['#00d2ff','#9d50bb','#ff5252','#4caf50','#ff9800','#e91e63','#009688'], borderWidth: 0 }] },
-            options: { plugins: { legend: { position: 'right', labels: { color: '#fff', font: {size: 10} } } }, maintainAspectRatio: false, cutout: '75%' }
-        });
-        renderSettings();
+        const s = {}; filt.filter(i=>i.type==='exp').forEach(i => s[i.cat] = (s[i.cat] || 0) + i.amt);
+        if(chart) chart.destroy();
+        chart = new Chart(document.getElementById('chart'), { type:'doughnut', data:{ labels:Object.keys(s), datasets:[{data:Object.values(s), backgroundColor:['#00d2ff','#9d50bb','#ff5252','#4caf50','#ff9800','#e91e63'], borderWeight:0}]}, options:{animation: false, plugins:{legend:{display:false}}, cutout:'80%'} });
     }
     update();
 </script>
 </body>
 </html>
+
 
