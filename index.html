@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZenFin Pro v16.1</title>
+    <title>ZenFin Pro v16.4</title>
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/781/781760.png">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -16,84 +17,107 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; overflow-x: hidden; }
         
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .app > div { animation: fadeInUp 0.6s ease forwards; }
-
         .app { width: 100%; max-width: 414px; padding: 10px; min-height: 100vh; }
-        .glass-card { background: var(--card); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 15px; margin-bottom: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .glass-card { background: var(--card); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 15px; margin-bottom: 12px; }
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 5px; }
         .brand { font-size: 1.4rem; font-weight: 900; background: var(--grad); -webkit-background-clip: text; color: transparent; letter-spacing: -1px; }
         .brand span { font-size: 0.7rem; vertical-align: top; margin-left: 2px; border: 1px solid var(--accent); padding: 1px 3px; border-radius: 4px; color: var(--accent); }
         
-        .icon-btn { background: var(--card); border: 1px solid rgba(255,255,255,0.1); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; }
-        .ok-btn { background: var(--accent); color: #000; border: none; padding: 6px 14px; border-radius: 12px; font-weight: bold; }
+        .header-actions { display: flex; gap: 8px; }
+        .icon-btn { background: var(--card); border: 1px solid rgba(255,255,255,0.1); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: white; cursor: pointer; }
+        .ok-text-btn { color: var(--accent); font-weight: bold; cursor: pointer; font-size: 0.9rem; padding: 5px; }
+        .ok-btn { background: var(--accent); color: #000; border: none; padding: 8px 16px; border-radius: 12px; font-weight: bold; width: 100%; margin-top: 10px; }
 
         .balance-chip { background: rgba(255,255,255,0.03); padding: 6px 12px; border-radius: 12px; border: 1px solid rgba(0,210,255,0.2); font-size: 0.85rem; color: var(--accent); font-weight: bold; display: inline-flex; align-items: center; gap: 6px; }
 
-        #screen { font-size: 2rem; text-align: right; color: var(--accent); min-height: 2.4rem; font-weight: 200; letter-spacing: -1px; }
+        #screen { font-size: 2rem; text-align: right; color: var(--accent); min-height: 2.4rem; font-weight: 200; }
         #liveResult { font-size: 0.8rem; text-align: right; color: #888; min-height: 1rem; margin-bottom: 8px; }
         
         .budget-container { margin: 10px 0; background: rgba(255,255,255,0.02); border-radius: 12px; padding: 8px; }
         .budget-label { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 5px; color: #888; }
-        .progress-bg { background: rgba(255,255,255,0.1); height: 4px; border-radius: 10px; }
+        .progress-bg { background: rgba(255,255,255,0.1); height: 4px; border-radius: 10px; overflow: hidden; }
         .progress-fill { height: 100%; width: 0%; background: var(--grad); transition: width 0.6s ease; }
 
         .cat-group { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .cat-item { display: flex; flex-direction: column; gap: 4px; min-width: fit-content; }
         .cat-btn { padding: 6px 12px; background: rgba(255,255,255,0.04); border-radius: 10px; font-size: 0.75rem; white-space: nowrap; border: 1px solid rgba(255,255,255,0.05); }
         .cat-btn.active { background: var(--accent); color: #000; font-weight: bold; }
+        .cat-mini-bar { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; width: 100%; }
+        .cat-mini-fill { height: 100%; background: var(--accent); width: 0%; transition: 0.5s; }
 
-        /* Компактная сетка калькулятора */
         .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
         .calc-grid button { border: none; background: rgba(255,255,255,0.05); color: #fff; padding: 10px; border-radius: 14px; font-size: 1.1rem; }
         .btn-op { color: var(--accent); font-weight: bold; }
         .action-btns { grid-column: span 4; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
-        .btn-inc { background: var(--success) !important; color: #000 !important; font-weight: 800; border-radius: 16px; padding: 12px !important; font-size: 0.8rem !important; }
-        .btn-exp { background: var(--grad) !important; color: #000 !important; font-weight: 800; border-radius: 16px; padding: 12px !important; font-size: 0.8rem !important; }
+        .btn-inc { background: var(--success) !important; color: #000 !important; font-weight: 800; border-radius: 16px; padding: 12px !important; }
+        .btn-exp { background: var(--grad) !important; color: #000 !important; font-weight: 800; border-radius: 16px; padding: 12px !important; }
 
+        #hist { max-height: 250px; overflow-y: auto; padding-right: 5px; }
         .history-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 0.85rem; }
         .history-date { font-size: 0.6rem; color: #666; width: 50px; }
-        .history-main { flex: 1; }
         .history-amt { font-weight: bold; }
+        .pos { color: var(--success); }
+        .neg { color: var(--danger); }
 
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(15px); z-index: 100; transform: translateY(100%); transition: 0.4s; padding: 20px; overflow-y: auto; }
         .overlay.active { transform: translateY(0); }
         .input-group { background: var(--card); padding: 15px; border-radius: 18px; margin-bottom: 12px; }
         input { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 10px; border-radius: 10px; outline: none; }
+        
+        .step { margin-bottom: 12px; padding-left: 10px; border-left: 2px solid var(--accent); font-size: 0.85rem; color: #bbb; }
+        .step b { color: var(--accent); display: block; }
+        .reset-btn { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 12px; border-radius: 15px; font-size: 0.8rem; width: 100%; margin-top: 20px; font-weight: bold; }
+        
+        .install-box { background: var(--grad); color: #000; padding: 15px; border-radius: 18px; margin-bottom: 20px; text-align: center; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
 
+<div id="helpOverlay" class="overlay">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
+        <h2 style="margin:0;">Инструкция</h2>
+        <span onclick="vibe(); closeAll()" class="ok-text-btn">OK</span>
+    </div>
+    <div id="installBanner" class="install-box" onclick="installApp()">📲 Скачать приложение</div>
+    <div class="step"><b>1. Баланс</b> Задайте сумму в ⚙️.</div>
+    <div class="step"><b>2. Расчет</b> Введите число или пример.</div>
+    <div class="step"><b>3. Категория</b> Выберите группу трат.</div>
+    <div class="step"><b>4. Лимит</b> Настройте лимит в ⚙️.</div>
+    <button onclick="vibe(); closeAll()" class="ok-btn">Понятно</button>
+</div>
+
 <div id="settingsOverlay" class="overlay">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
-        <h2 style="margin:0;">ZenFin Pro</h2>
-        <button onclick="closeAll()" class="ok-btn">OK</button>
+        <h2 style="margin:0;">Настройки</h2>
+        <span onclick="vibe(); closeAll()" class="ok-text-btn">OK</span>
     </div>
     <div class="input-group">
-        <label style="color:var(--accent); font-size:0.65rem; display:block; margin-bottom:5px;">БАЛАНС:</label>
+        <label style="color:var(--accent); font-size:0.65rem;">ТЕКУЩИЙ БАЛАНС:</label>
         <input type="number" id="startBal" onchange="updateSBal(this.value)">
     </div>
     <div class="input-group">
-        <label style="color:var(--accent); font-size:0.65rem; display:block; margin-bottom:5px;">ЛИМИТ:</label>
+        <label style="color:var(--accent); font-size:0.65rem;">МЕСЯЧНЫЙ ЛИМИТ:</label>
         <input type="number" id="monthLimit" onchange="updateLimit(this.value)">
     </div>
     <div class="input-group">
-        <label style="color:var(--accent); font-size:0.65rem; display:block; margin-bottom:5px;">КАТЕГОРИЯ:</label>
+        <label style="color:var(--accent); font-size:0.65rem;">НОВАЯ КАТЕГОРИЯ:</label>
         <div style="display:flex; gap:8px;">
             <input type="text" id="newCat">
-            <button onclick="addCat()" style="background:var(--accent); border:none; border-radius:10px; width:40px; font-weight:bold;">+</button>
+            <button onclick="vibe(); addCat()" style="background:var(--accent); border:none; border-radius:10px; width:40px; font-weight:bold;">+</button>
         </div>
-        <div id="catList" style="margin-top:15px;"></div>
+        <div id="catList" style="margin-top:10px;"></div>
     </div>
-    <button onclick="exportJSON()" style="width:100%; background:rgba(255,255,255,0.05); color:#888; padding:12px; border-radius:15px; border:1px solid rgba(255,255,255,0.1); font-weight:bold; font-size:0.8rem;">💾 БЭКАП JSON</button>
+    <button onclick="vibe('medium'); if(confirm('Удалить все данные?')) {localStorage.clear(); location.reload();}" class="reset-btn">❌ СБРОСИТЬ ВСЕ ПЛАТЕЖИ</button>
 </div>
 
 <div class="app">
     <div class="header">
         <div class="brand">ZenFin<span>PRO</span></div>
-        <div style="display:flex; gap:8px;">
-            <button class="icon-btn" onclick="document.getElementById('helpOverlay').classList.add('active')">?</button>
-            <button class="icon-btn" onclick="openSet()">⚙️</button>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="vibe(); shareApp()">🔗</button>
+            <button class="icon-btn" onclick="vibe(); document.getElementById('helpOverlay').classList.add('active')">?</button>
+            <button class="icon-btn" onclick="vibe(); openSet()">⚙️</button>
         </div>
     </div>
 
@@ -101,21 +125,16 @@
         <div class="balance-chip">💰 <span id="curBal">0</span> ₽</div>
         <div id="screen">0</div>
         <div id="liveResult"></div>
-
         <div id="budgetBar" class="budget-container" style="display:none">
-            <div class="budget-label">
-                <span>Остаток: <span id="limitLeft">0</span> ₽</span>
-                <span id="limitPerc">0%</span>
-            </div>
+            <div class="budget-label"><span>Остаток: <span id="limitLeft">0</span> ₽</span> <span id="limitPerc">0%</span></div>
             <div class="progress-bg"><div id="limitFill" class="progress-fill"></div></div>
         </div>
-
         <div class="cat-group" id="catGroup"></div>
         <div class="calc-grid">
             <button onclick="pr('7')">7</button><button onclick="pr('8')">8</button><button onclick="pr('9')">9</button><button class="btn-op" onclick="pr('/')">÷</button>
             <button onclick="pr('4')">4</button><button onclick="pr('5')">5</button><button onclick="pr('6')">6</button><button class="btn-op" onclick="pr('*')">×</button>
             <button onclick="pr('1')">1</button><button onclick="pr('2')">2</button><button onclick="pr('3')">3</button><button class="btn-op" onclick="pr('-')">-</button>
-            <button style="color:var(--danger)" onclick="input='';renderScr()">C</button><button onclick="pr('0')">0</button><button onclick="bs()">⌫</button><button class="btn-op" onclick="pr('+')">+</button>
+            <button style="color:var(--danger)" onclick="vibe('medium'); input='';renderScr()">C</button><button onclick="pr('0')">0</button><button onclick="bs()">⌫</button><button class="btn-op" onclick="pr('+')">+</button>
             <div class="action-btns">
                 <button class="btn-inc" onclick="add('inc')">Доход +</button>
                 <button class="btn-exp" onclick="add('exp')">Расход -</button>
@@ -125,21 +144,13 @@
 
     <div class="glass-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
-            <button onclick="chMonth(-1)" style="background:none; border:none; color:var(--accent); font-size:1.2rem">‹</button>
+            <button onclick="vibe(); chMonth(-1)" style="background:none; border:none; color:var(--accent); font-size:1.2rem">‹</button>
             <b id="monthLab" style="font-size:0.9rem;"></b>
-            <button onclick="chMonth(1)" style="background:none; border:none; color:var(--accent); font-size:1.2rem">›</button>
+            <button onclick="vibe(); chMonth(1)" style="background:none; border:none; color:var(--accent); font-size:1.2rem">›</button>
         </div>
-        <div style="height:120px"><canvas id="chart"></canvas></div>
-        <div id="hist" style="margin-top:10px"></div>
+        <div style="height:120px; margin-bottom: 10px;"><canvas id="chart"></canvas></div>
+        <div id="hist"></div>
     </div>
-</div>
-
-<div id="helpOverlay" class="overlay">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
-        <h2>Инфо</h2>
-        <button onclick="closeAll()" class="ok-btn">OK</button>
-    </div>
-    <p style="font-size:0.9rem; color:#bbb;">v16.1 Compact. Smart Emoji включены: Еда, Авто, Связь, Игры, Спорт и др.</p>
 </div>
 
 <script>
@@ -147,8 +158,43 @@
     let cats = JSON.parse(localStorage.getItem('f_cats_v15')) || ["Еда","Авто","Связь","Общее"];
     let sBal = parseFloat(localStorage.getItem('f_sbal_v15')) || 0;
     let limit = parseFloat(localStorage.getItem('f_limit_v15')) || 0;
+    const emojiMap = { "еда": "🍕", "авто": "🚗", "связь": "📱", "игры": "🎮", "дом": "🏠", "спорт": "💪", "здоровье": "💊" };
 
-    const emojiMap = { "еда": "🍕", "авто": "🚗", "связь": "📱", "игры": "🎮", "дом": "🏠", "спорт": "💪", "здоровье": "💊", "учеба": "📚", "отдых": "🌴" };
+    function vibe(type = 'light') {
+        if (navigator.vibrate) {
+            if (type === 'light') navigator.vibrate(10);
+            else if (type === 'medium') navigator.vibrate(35);
+        }
+    }
+
+    function playCoinSound() {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const playTone = (freq, start, duration) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, start);
+            gain.gain.setValueAtTime(0.15, start);
+            gain.gain.exponentialRampToValueAtTime(0.01, start + duration);
+            osc.connect(gain); gain.connect(ctx.destination);
+            osc.start(start); osc.stop(start + duration);
+        };
+        playTone(950, ctx.currentTime, 0.1);
+        playTone(1200, ctx.currentTime + 0.05, 0.15);
+    }
+
+    function playExpenseSound() {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(160, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.2);
+    }
 
     function closeAll() { document.querySelectorAll('.overlay').forEach(o => o.classList.remove('active')); }
     function openSet() { document.getElementById('settingsOverlay').classList.add('active'); renderCats(); }
@@ -160,47 +206,67 @@
         if(v){ cats.push(v); localStorage.setItem('f_cats_v15', JSON.stringify(cats)); document.getElementById('newCat').value=''; renderCats(); update(); }
     }
 
-    function pr(v) { input += v; renderScr(); }
-    function bs() { input = input.slice(0,-1); renderScr(); }
+    function pr(v) { vibe(); input += v; renderScr(); }
+    function bs() { vibe(); input = input.slice(0,-1); renderScr(); }
     function renderScr() { 
         document.getElementById('screen').innerText = input || "0";
         try { if(input.match(/[+\-*/]/)) document.getElementById('liveResult').innerText = "= " + eval(input).toLocaleString() + " ₽"; } catch(e){}
     }
 
     function add(type) {
+        vibe('medium');
         let v = 0; try { v = Math.abs(eval(input) || 0); } catch(e){return;}
         if(v <= 0) return;
+
+        if (type === 'inc') playCoinSound();
+        else if (type === 'exp' && v >= 100) playExpenseSound();
+
         const data = JSON.parse(localStorage.getItem('f_data_v15') || '[]');
         let displayCat = cat;
         for (let key in emojiMap) { if(cat.toLowerCase().includes(key)) displayCat = emojiMap[key] + " " + cat; }
-        
         data.unshift({ id: Date.now(), cat: type==='inc'?'💰 Доход':displayCat, amt:v, type, dt: new Date().toISOString() });
         localStorage.setItem('f_data_v15', JSON.stringify(data));
         input = ""; renderScr(); update();
     }
 
     function chMonth(v) { date.setMonth(date.getMonth()+v); update(); }
-    function renderCats() { document.getElementById('catList').innerHTML = cats.map((c,i) => `<div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:0.85rem;"><span>${c}</span><button onclick="cats.splice(${i},1);localStorage.setItem('f_cats_v15', JSON.stringify(cats));renderCats()" style="color:var(--danger); background:none; border:none;">Удалить</button></div>`).join(''); }
+    
+    function renderCats() { 
+        document.getElementById('catList').innerHTML = cats.map((c,i) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:0.8rem; background:rgba(255,255,255,0.03); padding:8px; border-radius:10px;">
+                <span>${c}</span>
+                <button onclick="vibe('medium'); cats.splice(${i},1); localStorage.setItem('f_cats_v15',JSON.stringify(cats)); renderCats(); update();" 
+                        style="color:var(--danger); background:none; border:none; font-size:0.75rem; font-weight:bold;">Удалить</button>
+            </div>`).join(''); 
+    }
 
     function update() {
         const data = JSON.parse(localStorage.getItem('f_data_v15') || '[]');
         const filt = data.filter(i => { let d=new Date(i.dt); return d.getMonth()===date.getMonth() && d.getFullYear()===date.getFullYear(); });
         const total = data.reduce((s,i)=> i.type==='inc'?s+i.amt:s-i.amt, sBal);
+        const expTotal = filt.filter(i => i.type === 'exp').reduce((s, i) => s + i.amt, 0);
 
         document.getElementById('curBal').innerText = total.toLocaleString();
         document.getElementById('monthLab').innerText = date.toLocaleString('ru', {month:'long', year:'numeric'});
-        document.getElementById('catGroup').innerHTML = cats.map(c => `<div class="cat-btn ${c===cat?'active':''}" onclick="cat='${c}'; update()">${c}</div>`).join('');
+        
+        document.getElementById('catGroup').innerHTML = cats.map(c => {
+            const catExp = filt.filter(i => i.type === 'exp' && i.cat.includes(c)).reduce((s,i) => s + i.amt, 0);
+            const p = expTotal > 0 ? Math.min((catExp / expTotal) * 100, 100) : 0;
+            return `<div class="cat-item">
+                <div class="cat-btn ${c===cat?'active':''}" onclick="vibe(); cat='${c}'; update()">${c}</div>
+                <div class="cat-mini-bar"><div class="cat-mini-fill" style="width:${p}%"></div></div>
+            </div>`;
+        }).join('');
 
-        const expOnly = filt.filter(i => i.type === 'exp').reduce((s, i) => s + i.amt, 0);
         if (limit > 0) {
             document.getElementById('budgetBar').style.display = 'block';
-            let p = Math.min((expOnly/limit)*100, 100);
+            let p = Math.min((expTotal/limit)*100, 100);
             document.getElementById('limitFill').style.width = p + '%';
-            document.getElementById('limitLeft').innerText = (limit - expOnly).toLocaleString();
-            document.getElementById('limitFill').style.background = (limit - expOnly < 0) ? 'var(--danger)' : 'var(--grad)';
+            document.getElementById('limitLeft').innerText = (limit - expTotal).toLocaleString();
+            document.getElementById('limitFill').style.background = (limit - expTotal < 0) ? 'var(--danger)' : 'var(--grad)';
         } else { document.getElementById('budgetBar').style.display = 'none'; }
 
-        document.getElementById('hist').innerHTML = filt.slice(0,15).map(i => `
+        document.getElementById('hist').innerHTML = filt.map(i => `
             <div class="history-item">
                 <div class="history-date">${new Date(i.dt).getDate()}.${new Date(i.dt).getMonth()+1}</div>
                 <div class="history-main">${i.cat}</div>
@@ -209,11 +275,9 @@
 
         const s = {}; filt.filter(i=>i.type==='exp').forEach(i => s[i.cat] = (s[i.cat] || 0) + i.amt);
         if(chart) chart.destroy();
-        chart = new Chart(document.getElementById('chart'), { type:'doughnut', data:{ labels:Object.keys(s), datasets:[{data:Object.values(s), backgroundColor:['#00d2ff','#9d50bb','#ff5252','#4caf50','#ff9800','#e91e63'], borderWeight:0}]}, options:{animation: false, plugins:{legend:{display:false}}, cutout:'80%'} });
+        chart = new Chart(document.getElementById('chart'), { type:'doughnut', data:{ labels:Object.keys(s), datasets:[{data:Object.values(s), backgroundColor:['#00d2ff','#9d50bb','#ff5252','#4caf50','#ff9800','#e91e63'], borderWeight:0}]}, options:{animation: false, plugins:{legend:{display:false}}, cutout:'80%', maintainAspectRatio: false} });
     }
     update();
 </script>
 </body>
 </html>
-
-
